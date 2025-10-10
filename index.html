@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>रेणुका माता किराणा स्टोअर</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom scrollbar for a cleaner look */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
+        .form-container {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-out, padding 0.5s ease-out;
+            padding: 0 1rem;
+        }
+        .form-container.active {
+            max-height: 500px; /* Adjust as needed */
+            padding: 1rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+
+    <!-- Header Section -->
+    <header class="bg-blue-600 text-white text-center py-6 shadow-md">
+        <h1 class="text-4xl font-bold">रेणुका माता किराणा स्टोअर</h1>
+        <p class="text-lg mt-1">तुमचे विश्वसनीय किराणा दुकान</p>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="container mx-auto p-4 md:p-8">
+        
+        <!-- Search Bar -->
+        <div class="mb-8">
+            <input type="text" id="searchInput" placeholder="Search for an item... (e.g., तांदूळ) 🔍" class="w-full p-4 text-lg border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+        </div>
+
+        <!-- Main Layout: Items on Left, Cart on Right -->
+        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-8">
+            
+            <!-- Left Side: Item List -->
+            <div class="md:col-span-2 lg:col-span-3 bg-white p-6 rounded-lg shadow-sm border">
+                <h2 class="text-3xl font-semibold mb-6 border-b pb-3">वस्तू निवडा</h2>
+                <div id="item-list-container" class="space-y-6">
+                    <!-- JavaScript will generate the item list here -->
+                </div>
+                 <button id="addCustomItemBtn" class="w-full mt-8 bg-yellow-500 text-white py-3 px-4 rounded-lg font-semibold text-lg hover:bg-yellow-600 transition shadow">[+] यादीत नसलेली वस्तू जोडा</button>
+                 <!-- Form for adding a custom item, hidden by default -->
+                 <div id="customItemForm" class="hidden mt-4 p-4 border rounded-lg bg-gray-50 space-y-4">
+                    <h3 class="text-xl font-semibold">नवीन वस्तू टाका</h3>
+                    <div>
+                        <input type="text" id="customItemName" placeholder="वस्तूचे नाव" class="w-full p-2 border rounded-md">
+                    </div>
+                    <div>
+                        <input type="number" id="customItemPrice" placeholder="किंमत (₹)" class="w-full p-2 border rounded-md">
+                    </div>
+                    <div class="flex gap-4">
+                        <button id="saveCustomItemBtn" class="w-full bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition">यादीत टाका</button>
+                        <button id="cancelCustomItemBtn" type="button" class="w-full bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-gray-600 transition">रद्द करा</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side: Shopping Cart -->
+            <div class="md:col-span-1 lg:col-span-2 bg-white p-6 rounded-lg shadow-sm border h-fit sticky top-8">
+                <h2 class="text-3xl font-semibold mb-6 border-b pb-3">तुमची खरेदीची यादी</h2>
+                <div id="cart-items" class="min-h-[100px] max-h-[50vh] overflow-y-auto pr-2">
+                    <p class="text-gray-500 text-center py-8">तुमची यादी रिकामी आहे.</p>
+                </div>
+                <div class="mt-6 pt-4 border-t-2 border-dashed">
+                    <h3 class="text-3xl font-bold text-right">एकूण: <span id="total-price" class="text-green-600">₹ 0.00</span></h3>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                // --- Default DATA: All store items in Marathi and English---
+                const defaultProducts = [
+                    { id: 1, name: 'गहू', nameEn: 'Wheat', category: 'धान्य आणि पीठ', prices: { '२५० ग्रॅ': 11, '५०० ग्रॅ': 21, '१ किलो': 42 } },
+                    { id: 2, name: 'तांदूळ कोलम', nameEn: 'Kolam Rice', category: 'धान्य आणि पीठ', prices: { '२५० ग्रॅ': 11, '५०० ग्रॅ': 26, '१ किलो': 52 } },
+                    { id: 3, name: 'तांदूळ बासमती', nameEn: 'Basmati Rice', category: 'धान्य आणि पीठ', prices: { '२५० ग्रॅ': 13, '५०० ग्रॅ': 30, '१ किलो': 60 } },
+                    { id: 4, name: 'पोहे', nameEn: 'Poha', category: 'धान्य आणि पीठ', prices: { '२५० ग्रॅ': 15, '५०० ग्रॅ': 35, '१ किलो': 65 } },
+                    { id: 5, name: 'साबुदाणा', nameEn: 'Sago', category: 'धान्य आणि पीठ', prices: { '२५० ग्रॅ': 12, '५०० ग्रॅ': 24, '१ किलो': 45 } },
+                    { id: 6, name: 'रवा', nameEn: 'Semolina', category: 'धान्य आणि पीठ', prices: { '५०० ग्रॅ': 24, '१ किलो': 48 } },
+                    { id: 7, name: 'मैदा', nameEn: 'All-Purpose Flour', category: 'धान्य आणि पीठ', prices: { '५०० ग्रॅ': 40, '१ किलो': 80 } },
+                    { id: 8, name: 'तूरडाळ', nameEn: 'Tur Dal', category: 'डाळी आणि कडधान्ये', prices: { '२५० ग्रॅ': 25, '५०० ग्रॅ': 50, '१ किलो': 100 } },
+                    { id: 9, name: 'उडीद डाळ', nameEn: 'Urad Dal', category: 'डाळी आणि कडधान्ये', prices: { '५०० ग्रॅ': 60, '१ किलो': 120 } },
+                    { id: 10, name: 'शेंगदाणा', nameEn: 'Peanut', category: 'डाळी आणि कडधान्ये', prices: { '५०० ग्रॅ': 60, '१ किलो': 120 } },
+                    { id: 11, name: 'मटकी', nameEn: 'Moth Bean', category: 'डाळी आणि कडधान्ये', prices: { '५०० ग्रॅ': 90, '१ किलो': 180 } },
+                    { id: 12, name: 'साखर', nameEn: 'Sugar', category: 'साखर, गूळ आणि तेल', prices: { '५०० ग्रॅ': 60, '१ किलो': 120 } },
+                    { id: 13, name: 'गूळ', nameEn: 'Jaggery', category: 'साखर, गूळ आणि तेल', prices: { '१ नग': 15 } },
+                    { id: 14, name: 'तेल', nameEn: 'Oil', category: 'साखर, गूळ आणि तेल', prices: { '१ डबा': 40 } },
+                    { id: 15, name: 'मॅगी', nameEn: 'Maggi', category: 'पॅक केलेले पदार्थ', prices: { '१ नग': 7 } },
+                    { id: 16, name: 'किसान जॅम', nameEn: 'Kissan Jam', category: 'पॅक केलेले पदार्थ', prices: { '१ नग': 25 } },
+                    { id: 17, name: 'गोळी साबण', nameEn: 'Soap Bar', category: 'वैयक्तिक काळजी आणि इतर', prices: { '१ नग': 15 } },
+                    { id: 18, name: 'नीता मेहंदी', nameEn: 'Nita Mehendi', category: 'वैयक्तिक काळजी आणि इतर', prices: { '१ नग': 10 } },
+                ];
+
+                let products = JSON.parse(localStorage.getItem('renukaKiranaProducts')) || defaultProducts;
+                let cart = [ { id: 15, name: 'मॅगी', quantity: '१ नग', price: 7, count: 2, isSample: true } ];
+
+                const itemListContainer = document.getElementById('item-list-container');
+                const searchInput = document.getElementById('searchInput');
+                const cartItemsContainer = document.getElementById('cart-items');
+                const totalPriceEl = document.getElementById('total-price');
+                const addCustomItemBtn = document.getElementById('addCustomItemBtn');
+                const customItemForm = document.getElementById('customItemForm');
+                const customItemNameInput = document.getElementById('customItemName');
+                const customItemPriceInput = document.getElementById('customItemPrice');
+                const saveCustomItemBtn = document.getElementById('saveCustomItemBtn');
+                const cancelCustomItemBtn = document.getElementById('cancelCustomItemBtn');
+
+                function saveProducts() {
+                    localStorage.setItem('renukaKiranaProducts', JSON.stringify(products));
+                }
+
+                function renderProducts(productsToRender) {
+                    itemListContainer.innerHTML = '';
+                    const categories = {};
+                    productsToRender.forEach(p => {
+                        if (!categories[p.category]) categories[p.category] = [];
+                        categories[p.category].push(p);
+                    });
+
+                    for (const category in categories) {
+                        const categoryDiv = document.createElement('div');
+                        const categoryId = category.replace(/\s+/g, '-');
+                        
+                        const categoryHeader = document.createElement('div');
+                        categoryHeader.className = 'flex justify-between items-center mb-4';
+                        categoryHeader.innerHTML = `
+                            <h3 class="text-2xl font-semibold text-blue-700">${category}</h3>
+                            <div class="flex items-center gap-2">
+                                <button class="add-product-btn text-gray-500 hover:text-green-700 p-1 rounded-md" data-category-id="${categoryId}" data-category-name="${category}">➕ Add Product</button>
+                                <button class="edit-category-btn text-gray-500 hover:text-blue-700 p-1 rounded-md" data-category="${category}">✏️ Edit</button>
+                            </div>
+                        `;
+                        categoryDiv.appendChild(categoryHeader);
+                        
+                        const addProductFormContainer = document.createElement('div');
+                        addProductFormContainer.id = `add-product-form-${categoryId}`;
+                        addProductFormContainer.className = 'form-container border-t pt-4 mt-4';
+                        categoryDiv.appendChild(addProductFormContainer);
+
+
+                        const itemsGrid = document.createElement('div');
+                        itemsGrid.className = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4';
+                        itemsGrid.innerHTML = categories[category].map(product => `
+                            <div class="bg-gray-100 p-4 rounded-lg border">
+                                <p class="text-xl font-bold mb-3">${product.name}</p>
+                                <div class="flex flex-wrap gap-2">
+                                    ${Object.keys(product.prices).map(quantity => `
+                                        <button class="flex-grow bg-blue-100 text-blue-800 border border-blue-300 py-2 px-3 rounded-md hover:bg-blue-600 hover:text-white transition text-sm"
+                                            data-product-id="${product.id}" data-quantity="${quantity}" data-price="${product.prices[quantity]}">
+                                            ${quantity} (₹${product.prices[quantity]})
+                                        </button>`).join('')}
+                                </div>
+                            </div>`).join('');
+                        categoryDiv.appendChild(itemsGrid);
+                        itemListContainer.appendChild(categoryDiv);
+                    }
+                }
+
+                function renderCart() {
+                    cartItemsContainer.innerHTML = '';
+                    if (cart.length === 0) {
+                        cartItemsContainer.innerHTML = '<p class="text-gray-500 text-center py-8">तुमची यादी रिकामी आहे.</p>';
+                        updateTotal(); return;
+                    }
+                    if (cart.every(item => item.isSample)) {
+                        const sampleMessage = document.createElement('p');
+                        sampleMessage.className = 'text-sm text-center text-gray-500 mb-2 p-2 bg-yellow-100 rounded-md';
+                        sampleMessage.textContent = 'उदाहरणासाठी एक वस्तू टाकली आहे. तुम्ही काढून टाकू शकता.';
+                        cartItemsContainer.appendChild(sampleMessage);
+                    }
+                    cart.forEach((cartItem, index) => {
+                        const itemDiv = document.createElement('div');
+                        itemDiv.className = 'flex items-center justify-between py-3 border-b';
+                        itemDiv.innerHTML = `
+                            <div class="flex-grow"><span class="font-semibold">${cartItem.name} <span class="text-gray-600 font-normal">(${cartItem.quantity})</span></span></div>
+                            <div class="flex items-center gap-2">
+                                <button class="decrease-qty w-7 h-7 bg-gray-200 rounded-full font-bold text-lg hover:bg-red-500 hover:text-white transition" data-index="${index}">-</button>
+                                <span class="w-8 text-center font-semibold">${cartItem.count}</span>
+                                <button class="increase-qty w-7 h-7 bg-gray-200 rounded-full font-bold text-lg hover:bg-green-500 hover:text-white transition" data-index="${index}">+</button>
+                                <button class="remove-btn text-red-500 hover:text-red-700 ml-2" data-index="${index}">🗑️</button>
+                            </div>
+                            <span class="font-bold text-right w-24">₹${(cartItem.price * cartItem.count).toFixed(2)}</span>`;
+                        cartItemsContainer.appendChild(itemDiv);
+                    });
+                    updateTotal();
+                }
+                
+                function updateTotal() {
+                    const total = cart.reduce((sum, item) => sum + (item.price * item.count), 0);
+                    totalPriceEl.textContent = `₹ ${total.toFixed(2)}`;
+                }
+                
+                function addToCart(productId, quantity, price) {
+                    if (cart.length > 0 && cart.every(item => item.isSample)) cart = [];
+                    const existingItem = cart.find(item => item.id === productId && item.quantity === quantity);
+                    if (existingItem) existingItem.count++;
+                    else cart.push({ id: productId, name: products.find(p => p.id === productId).name, quantity, price, count: 1 });
+                    renderCart();
+                }
+                
+                searchInput.addEventListener('input', e => {
+                    const searchTerm = e.target.value.toLowerCase();
+                    renderProducts(products.filter(p => p.name.toLowerCase().includes(searchTerm) || (p.nameEn && p.nameEn.toLowerCase().includes(searchTerm))));
+                });
+
+                itemListContainer.addEventListener('click', e => {
+                    const button = e.target.closest('button');
+                    if (!button) return;
+
+                    if (button.dataset.productId) {
+                       const { productId, quantity, price } = button.dataset;
+                       addToCart(parseInt(productId), quantity, parseFloat(price));
+                    }
+                    if (button.classList.contains('edit-category-btn')) {
+                        const categoryName = button.dataset.category;
+                        const header = button.parentElement.parentElement;
+                        header.innerHTML = `
+                            <input type="text" value="${categoryName}" class="text-2xl font-semibold text-blue-700 border rounded-md px-2 flex-grow">
+                            <div class="flex gap-2">
+                                <button class="save-category-btn bg-green-500 text-white px-3 py-1 rounded-md" data-old-category="${categoryName}">Save</button>
+                                <button class="cancel-edit-category-btn bg-gray-500 text-white px-3 py-1 rounded-md">Cancel</button>
+                            </div>
+                        `;
+                        header.querySelector('input').focus();
+                    }
+                    if (button.classList.contains('save-category-btn')) {
+                        const oldCategoryName = button.dataset.oldCategory;
+                        const newCategoryName = button.parentElement.parentElement.querySelector('input').value.trim();
+                        if (newCategoryName && newCategoryName !== oldCategoryName) {
+                            products.forEach(p => { if (p.category === oldCategoryName) p.category = newCategoryName; });
+                            saveProducts();
+                        }
+                        renderProducts(products);
+                    }
+                    if (button.classList.contains('cancel-edit-category-btn')) renderProducts(products);
+                    
+                    if (button.classList.contains('add-product-btn')) {
+                        const { categoryId, categoryName } = button.dataset;
+                        const formContainer = document.getElementById(`add-product-form-${categoryId}`);
+                        
+                        if (formContainer.classList.contains('active')) {
+                            formContainer.classList.remove('active');
+                            formContainer.innerHTML = '';
+                        } else {
+                            document.querySelectorAll('.form-container.active').forEach(fc => {
+                                fc.classList.remove('active');
+                                fc.innerHTML = '';
+                            });
+
+                            formContainer.innerHTML = `
+                                <div class="space-y-3 p-4 border rounded-lg bg-gray-50">
+                                    <h4 class="text-lg font-semibold">Add New Product to "${categoryName}"</h4>
+                                    <input type="text" placeholder="Product Name (Marathi)" class="new-product-name w-full p-2 border rounded-md">
+                                    <input type="text" placeholder="Product Name (English)" class="new-product-nameEn w-full p-2 border rounded-md">
+                                    <div class="price-entries space-y-2">
+                                        <div class="flex gap-2 items-center">
+                                            <input type="text" placeholder="Quantity (e.g., १ किलो)" class="new-product-quantity w-1/2 p-2 border rounded-md">
+                                            <input type="number" placeholder="Price (₹)" class="new-product-price w-1/2 p-2 border rounded-md">
+                                        </div>
+                                    </div>
+                                    <button class="add-price-point-btn text-sm text-blue-600 hover:underline">+ Add another price</button>
+                                    <div class="flex gap-4 pt-2">
+                                        <button class="save-new-product-btn w-full bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600" data-category-name="${categoryName}">Save Product</button>
+                                        <button class="cancel-new-product-btn w-full bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-gray-600">Cancel</button>
+                                    </div>
+                                </div>`;
+                            formContainer.classList.add('active');
+                        }
+                    }
+                    
+                    if (button.classList.contains('add-price-point-btn')) {
+                        const priceEntries = button.previousElementSibling;
+                        const newPriceEntry = document.createElement('div');
+                        newPriceEntry.className = 'flex gap-2 items-center';
+                        newPriceEntry.innerHTML = `
+                            <input type="text" placeholder="Quantity" class="new-product-quantity w-1/2 p-2 border rounded-md">
+                            <input type="number" placeholder="Price (₹)" class="new-product-price w-1/2 p-2 border rounded-md">`;
+                        priceEntries.appendChild(newPriceEntry);
+                    }
+
+                    if (button.classList.contains('cancel-new-product-btn')) {
+                        const formContainer = button.closest('.form-container');
+                        formContainer.classList.remove('active');
+                        formContainer.innerHTML = '';
+                    }
+
+                    if (button.classList.contains('save-new-product-btn')) {
+                        const form = button.closest('div.p-4');
+                        const categoryName = button.dataset.categoryName;
+                        const name = form.querySelector('.new-product-name').value.trim();
+                        const nameEn = form.querySelector('.new-product-nameEn').value.trim();
+                        const prices = {};
+                        const priceEntries = form.querySelectorAll('.price-entries > div');
+                        let validPrices = true;
+
+                        priceEntries.forEach(entry => {
+                            const quantity = entry.querySelector('.new-product-quantity').value.trim();
+                            const price = parseFloat(entry.querySelector('.new-product-price').value);
+                            if (quantity && !isNaN(price) && price > 0) {
+                                prices[quantity] = price;
+                            } else {
+                                validPrices = false;
+                            }
+                        });
+
+                        if (name && validPrices && Object.keys(prices).length > 0) {
+                            products.push({ id: Date.now(), name, nameEn, category: categoryName, prices });
+                            saveProducts();
+                            renderProducts(products);
+                        } else {
+                            alert('Please enter a valid product name and at least one valid quantity/price.');
+                        }
+                    }
+                });
+
+                cartItemsContainer.addEventListener('click', e => {
+                    const button = e.target.closest('button');
+                    if (!button || !button.dataset.index) return;
+                    const index = parseInt(button.dataset.index);
+                    if (button.classList.contains('remove-btn')) cart.splice(index, 1);
+                    else if (button.classList.contains('increase-qty')) cart[index].count++;
+                    else if (button.classList.contains('decrease-qty')) {
+                        if (cart[index].count > 1) cart[index].count--; else cart.splice(index, 1);
+                    }
+                    renderCart();
+                });
+                
+                addCustomItemBtn.addEventListener('click', () => {
+                    customItemForm.classList.remove('hidden');
+                    addCustomItemBtn.classList.add('hidden');
+                });
+
+                cancelCustomItemBtn.addEventListener('click', () => {
+                    customItemForm.classList.add('hidden');
+                    addCustomItemBtn.classList.remove('hidden');
+                    customItemNameInput.value = '';
+                    customItemPriceInput.value = '';
+                });
+
+                saveCustomItemBtn.addEventListener('click', () => {
+                    const name = customItemNameInput.value.trim();
+                    const price = parseFloat(customItemPriceInput.value);
+                    if (name && !isNaN(price) && price > 0) {
+                        if (cart.length > 0 && cart.every(item => item.isSample)) cart = [];
+                        cart.push({ id: 'custom-' + Date.now(), name, quantity: 'custom', price, count: 1 });
+                        renderCart();
+                        customItemForm.classList.add('hidden');
+                        addCustomItemBtn.classList.remove('hidden');
+                        customItemNameInput.value = '';
+                        customItemPriceInput.value = '';
+                    } else { alert("अयोग्य नाव किंवा किंमत. कृपया पुन्हा प्रयत्न करा."); }
+                });
+
+                renderProducts(products);
+                renderCart();
+            } catch (error) {
+                document.querySelector('main').innerHTML = `<div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg" role="alert"><strong class="font-bold">Oops! Something went wrong.</strong><span class="block sm:inline">The application could not be loaded. Please try refreshing the page.</span><pre class="mt-2 text-xs">${error}</pre></div>`;
+                console.error("Application failed to load:", error);
+            }
+        });
+    </script>
+</body>
+</html>
+
