@@ -22,6 +22,15 @@
             max-height: 500px; /* Adjust as needed */
             padding: 1rem;
         }
+        /* Style to indicate product cards are interactive */
+        .product-card {
+            transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+            cursor: pointer;
+        }
+        .product-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
     </style>
 </head>
 <body class="bg-gray-50 font-sans">
@@ -37,7 +46,7 @@
         
         <!-- Search Bar -->
         <div class="mb-8">
-            <input type="text" id="searchInput" placeholder="Search for an item... (e.g., तांदूळ) 🔍" class="w-full p-4 text-lg border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+            <input type="text" id="searchInput" placeholder="Search for an item... (e.g., gahu) 🔍" class="w-full p-4 text-lg border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
         </div>
 
         <!-- Main Layout: Items on Left, Cart on Right -->
@@ -49,7 +58,23 @@
                 <div id="item-list-container" class="space-y-6">
                     <!-- JavaScript will generate the item list here -->
                 </div>
-                 <button id="addCustomItemBtn" class="w-full mt-8 bg-yellow-500 text-white py-3 px-4 rounded-lg font-semibold text-lg hover:bg-yellow-600 transition shadow">[+] यादीत नसलेली वस्तू जोडा</button>
+                
+                <!-- Add New Category Section -->
+                <div class="mt-8 pt-6 border-t">
+                    <button id="addNewCategoryBtn" class="w-full bg-indigo-500 text-white py-3 px-4 rounded-lg font-semibold text-lg hover:bg-indigo-600 transition shadow">[+] नवीन श्रेणी जोडा (Add New Category)</button>
+                    <div id="newCategoryForm" class="hidden mt-4 p-4 border rounded-lg bg-gray-50 space-y-4">
+                        <h3 class="text-xl font-semibold">नवीन श्रेणी तयार करा</h3>
+                        <div>
+                            <input type="text" id="newCategoryNameInput" placeholder="श्रेणीचे नाव (Category Name)" class="w-full p-2 border rounded-md">
+                        </div>
+                        <div class="flex gap-4">
+                            <button id="saveNewCategoryBtn" class="w-full bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition">श्रेणी जतन करा</button>
+                            <button id="cancelNewCategoryBtn" type="button" class="w-full bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-gray-600 transition">रद्द करा</button>
+                        </div>
+                    </div>
+                </div>
+
+                 <button id="addCustomItemBtn" class="w-full mt-4 bg-yellow-500 text-white py-3 px-4 rounded-lg font-semibold text-lg hover:bg-yellow-600 transition shadow">[+] यादीत नसलेली वस्तू जोडा</button>
                  <!-- Form for adding a custom item, hidden by default -->
                  <div id="customItemForm" class="hidden mt-4 p-4 border rounded-lg bg-gray-50 space-y-4">
                     <h3 class="text-xl font-semibold">नवीन वस्तू टाका</h3>
@@ -84,27 +109,28 @@
             try {
                 // --- Default DATA: All store items in Marathi and English---
                 const defaultProducts = [
-                    { id: 1, name: 'गहू', nameEn: 'Wheat', category: 'धान्य आणि पीठ', prices: { '२५० ग्रॅ': 11, '५०० ग्रॅ': 21, '१ किलो': 42 } },
-                    { id: 2, name: 'तांदूळ कोलम', nameEn: 'Kolam Rice', category: 'धान्य आणि पीठ', prices: { '२५० ग्रॅ': 11, '५०० ग्रॅ': 26, '१ किलो': 52 } },
-                    { id: 3, name: 'तांदूळ बासमती', nameEn: 'Basmati Rice', category: 'धान्य आणि पीठ', prices: { '२५० ग्रॅ': 13, '५०० ग्रॅ': 30, '१ किलो': 60 } },
-                    { id: 4, name: 'पोहे', nameEn: 'Poha', category: 'धान्य आणि पीठ', prices: { '२५० ग्रॅ': 15, '५०० ग्रॅ': 35, '१ किलो': 65 } },
-                    { id: 5, name: 'साबुदाणा', nameEn: 'Sago', category: 'धान्य आणि पीठ', prices: { '२५० ग्रॅ': 12, '५०० ग्रॅ': 24, '१ किलो': 45 } },
-                    { id: 6, name: 'रवा', nameEn: 'Semolina', category: 'धान्य आणि पीठ', prices: { '५०० ग्रॅ': 24, '१ किलो': 48 } },
-                    { id: 7, name: 'मैदा', nameEn: 'All-Purpose Flour', category: 'धान्य आणि पीठ', prices: { '५०० ग्रॅ': 40, '१ किलो': 80 } },
-                    { id: 8, name: 'तूरडाळ', nameEn: 'Tur Dal', category: 'डाळी आणि कडधान्ये', prices: { '२५० ग्रॅ': 25, '५०० ग्रॅ': 50, '१ किलो': 100 } },
-                    { id: 9, name: 'उडीद डाळ', nameEn: 'Urad Dal', category: 'डाळी आणि कडधान्ये', prices: { '५०० ग्रॅ': 60, '१ किलो': 120 } },
-                    { id: 10, name: 'शेंगदाणा', nameEn: 'Peanut', category: 'डाळी आणि कडधान्ये', prices: { '५०० ग्रॅ': 60, '१ किलो': 120 } },
-                    { id: 11, name: 'मटकी', nameEn: 'Moth Bean', category: 'डाळी आणि कडधान्ये', prices: { '५०० ग्रॅ': 90, '१ किलो': 180 } },
-                    { id: 12, name: 'साखर', nameEn: 'Sugar', category: 'साखर, गूळ आणि तेल', prices: { '५०० ग्रॅ': 60, '१ किलो': 120 } },
-                    { id: 13, name: 'गूळ', nameEn: 'Jaggery', category: 'साखर, गूळ आणि तेल', prices: { '१ नग': 15 } },
-                    { id: 14, name: 'तेल', nameEn: 'Oil', category: 'साखर, गूळ आणि तेल', prices: { '१ डबा': 40 } },
-                    { id: 15, name: 'मॅगी', nameEn: 'Maggi', category: 'पॅक केलेले पदार्थ', prices: { '१ नग': 7 } },
-                    { id: 16, name: 'किसान जॅम', nameEn: 'Kissan Jam', category: 'पॅक केलेले पदार्थ', prices: { '१ नग': 25 } },
-                    { id: 17, name: 'गोळी साबण', nameEn: 'Soap Bar', category: 'वैयक्तिक काळजी आणि इतर', prices: { '१ नग': 15 } },
-                    { id: 18, name: 'नीता मेहंदी', nameEn: 'Nita Mehendi', category: 'वैयक्तिक काळजी आणि इतर', prices: { '१ नग': 10 } },
+                    { id: 1, name: 'गहू', nameEn: 'gahu', category: 'धान्य आणि पीठ', prices: { '२५० ग्रॅ': 11, '५०० ग्रॅ': 21, '१ किलो': 42 } },
+                    { id: 2, name: 'तांदूळ कोलम', nameEn: 'tandul kolam', category: 'धान्य आणि पीठ', prices: { '२५० ग्रॅ': 11, '५०० ग्रॅ': 26, '१ किलो': 52 } },
+                    { id: 3, name: 'तांदूळ बासमती', nameEn: 'tandul basmati', category: 'धान्य आणि पीठ', prices: { '२५० ग्रॅ': 13, '५०० ग्रॅ': 30, '१ किलो': 60 } },
+                    { id: 4, name: 'पोहे', nameEn: 'pohe', category: 'धान्य आणि पीठ', prices: { '२५० ग्रॅ': 15, '५०० ग्रॅ': 35, '१ किलो': 65 } },
+                    { id: 5, name: 'साबुदाणा', nameEn: 'sabudana', category: 'धान्य आणि पीठ', prices: { '२५० ग्रॅ': 12, '५०० ग्रॅ': 24, '१ किलो': 45 } },
+                    { id: 6, name: 'रवा', nameEn: 'rava', category: 'धान्य आणि पीठ', prices: { '५०० ग्रॅ': 24, '१ किलो': 48 } },
+                    { id: 7, name: 'मैदा', nameEn: 'maida', category: 'धान्य आणि पीठ', prices: { '५०० ग्रॅ': 40, '१ किलो': 80 } },
+                    { id: 8, name: 'तूरडाळ', nameEn: 'tur dal', category: 'डाळी आणि कडधान्ये', prices: { '२५० ग्रॅ': 25, '५०० ग्रॅ': 50, '१ किलो': 100 } },
+                    { id: 9, name: 'उडीद डाळ', nameEn: 'udid dal', category: 'डाळी आणि कडधान्ये', prices: { '५०० ग्रॅ': 60, '१ किलो': 120 } },
+                    { id: 10, name: 'शेंगदाणा', nameEn: 'shengdana', category: 'डाळी आणि कडधान्ये', prices: { '५०० ग्रॅ': 60, '१ किलो': 120 } },
+                    { id: 11, name: 'मटकी', nameEn: 'matki', category: 'डाळी आणि कडधान्ये', prices: { '५०० ग्रॅ': 90, '१ किलो': 180 } },
+                    { id: 12, name: 'साखर', nameEn: 'sakhar', category: 'साखर, गूळ आणि तेल', prices: { '५०० ग्रॅ': 60, '१ किलो': 120 } },
+                    { id: 13, name: 'गूळ', nameEn: 'gul', category: 'साखर, गूळ आणि तेल', prices: { '१ नग': 15 } },
+                    { id: 14, 'name': 'तेल', nameEn: 'tel', category: 'साखर, गूळ आणि तेल', prices: { '१ डबा': 40 } },
+                    { id: 15, name: 'मॅगी', nameEn: 'maggi', category: 'पॅक केलेले पदार्थ', prices: { '१ नग': 7 } },
+                    { id: 16, name: 'किसान जॅम', nameEn: 'kissan jam', category: 'पॅक केलेले पदार्थ', prices: { '१ नग': 25 } },
+                    { id: 17, name: 'गोळी साबण', nameEn: 'goli saban', category: 'वैयक्तिक काळजी आणि इतर', prices: { '१ नग': 15 } },
+                    { id: 18, name: 'नीता मेहंदी', nameEn: 'nita mehendi', category: 'वैयक्तिक काळजी आणि इतर', prices: { '१ नग': 10 } },
                 ];
 
                 let products = JSON.parse(localStorage.getItem('renukaKiranaProducts')) || defaultProducts;
+                let categories = JSON.parse(localStorage.getItem('renukaKiranaCategories')) || [...new Set(products.map(p => p.category))];
                 let cart = [ { id: 15, name: 'मॅगी', quantity: '१ नग', price: 7, count: 2, isSample: true } ];
 
                 const itemListContainer = document.getElementById('item-list-container');
@@ -117,20 +143,69 @@
                 const customItemPriceInput = document.getElementById('customItemPrice');
                 const saveCustomItemBtn = document.getElementById('saveCustomItemBtn');
                 const cancelCustomItemBtn = document.getElementById('cancelCustomItemBtn');
+                const addNewCategoryBtn = document.getElementById('addNewCategoryBtn');
+                const newCategoryForm = document.getElementById('newCategoryForm');
+                const newCategoryNameInput = document.getElementById('newCategoryNameInput');
+                const saveNewCategoryBtn = document.getElementById('saveNewCategoryBtn');
+                const cancelNewCategoryBtn = document.getElementById('cancelNewCategoryBtn');
+
 
                 function saveProducts() {
                     localStorage.setItem('renukaKiranaProducts', JSON.stringify(products));
                 }
+                
+                function saveCategories() {
+                    localStorage.setItem('renukaKiranaCategories', JSON.stringify(categories));
+                }
+
+                function enterProductEditMode(productId) {
+                    const product = products.find(p => p.id === productId);
+                    if (!product) return;
+                    const productCard = document.getElementById(`product-card-${productId}`);
+                    if (!productCard) return;
+
+                    if ('vibrate' in navigator) {
+                        navigator.vibrate(50); // Haptic feedback on mobile
+                    }
+                    
+                    productCard.innerHTML = `
+                        <div class="space-y-2">
+                            <input type="text" value="${product.name}" class="edit-product-name w-full p-2 border rounded-md font-bold">
+                            <input type="text" value="${product.nameEn || ''}" placeholder="Romanized Name" class="edit-product-nameEn w-full p-2 border rounded-md">
+                            <div class="edit-price-entries space-y-2 border-t pt-2 mt-2">
+                                ${Object.keys(product.prices).map(q => `
+                                    <div class="flex gap-2 items-center">
+                                        <input type="text" value="${q}" class="edit-product-quantity w-1/2 p-2 border rounded-md text-sm">
+                                        <input type="number" value="${product.prices[q]}" class="edit-product-price w-1/2 p-2 border rounded-md text-sm">
+                                        <button class="remove-price-point-btn text-red-500">✖</button>
+                                    </div>`).join('')}
+                            </div>
+                            <button class="add-edit-price-point-btn text-sm text-blue-600 hover:underline">+ Add another price</button>
+                            <div class="flex gap-2 pt-2">
+                                <button class="save-edit-product-btn w-full bg-green-500 text-white py-1 px-2 text-sm rounded-md" data-product-id="${productId}">Save</button>
+                                <button class="cancel-edit-product-btn w-full bg-gray-500 text-white py-1 px-2 text-sm rounded-md">Cancel</button>
+                            </div>
+                            <button class="delete-product-btn w-full bg-red-500 text-white mt-2 py-1 px-2 text-sm rounded-md" data-product-id="${productId}">Delete Product</button>
+                        </div>`;
+                }
 
                 function renderProducts(productsToRender) {
                     itemListContainer.innerHTML = '';
-                    const categories = {};
+                    const productsByCategory = {};
                     productsToRender.forEach(p => {
-                        if (!categories[p.category]) categories[p.category] = [];
-                        categories[p.category].push(p);
+                        if (!productsByCategory[p.category]) productsByCategory[p.category] = [];
+                        productsByCategory[p.category].push(p);
                     });
 
-                    for (const category in categories) {
+                    const isSearching = productsToRender.length !== products.length;
+
+                    categories.forEach(category => {
+                        const categoryProducts = productsByCategory[category] || [];
+
+                        if (isSearching && categoryProducts.length === 0) {
+                            return;
+                        }
+
                         const categoryDiv = document.createElement('div');
                         const categoryId = category.replace(/\s+/g, '-');
                         
@@ -150,11 +225,13 @@
                         addProductFormContainer.className = 'form-container border-t pt-4 mt-4';
                         categoryDiv.appendChild(addProductFormContainer);
 
-
                         const itemsGrid = document.createElement('div');
                         itemsGrid.className = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4';
-                        itemsGrid.innerHTML = categories[category].map(product => `
-                            <div class="bg-gray-100 p-4 rounded-lg border">
+                        categoryProducts.forEach(product => {
+                            const productCard = document.createElement('div');
+                            productCard.className = 'product-card bg-gray-100 p-4 rounded-lg border';
+                            productCard.id = `product-card-${product.id}`;
+                            productCard.innerHTML = `
                                 <p class="text-xl font-bold mb-3">${product.name}</p>
                                 <div class="flex flex-wrap gap-2">
                                     ${Object.keys(product.prices).map(quantity => `
@@ -162,11 +239,35 @@
                                             data-product-id="${product.id}" data-quantity="${quantity}" data-price="${product.prices[quantity]}">
                                             ${quantity} (₹${product.prices[quantity]})
                                         </button>`).join('')}
-                                </div>
-                            </div>`).join('');
+                                </div>`;
+                            
+                            // Event listeners for editing
+
+                            // For Desktop: Double click to edit
+                            productCard.addEventListener('dblclick', (e) => {
+                                // Don't trigger edit if a button inside the card is the target
+                                if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
+                                enterProductEditMode(product.id);
+                            });
+
+                            // For Mobile: Long press to edit
+                            let pressTimer;
+                            const startPress = (e) => {
+                                // Don't trigger edit if a button inside the card is the target
+                                if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
+                                pressTimer = window.setTimeout(() => enterProductEditMode(product.id), 500);
+                            };
+                            const cancelPress = () => clearTimeout(pressTimer);
+                            
+                            productCard.addEventListener('touchstart', startPress, { passive: true });
+                            productCard.addEventListener('touchend', cancelPress);
+                            productCard.addEventListener('touchmove', cancelPress);
+
+                            itemsGrid.appendChild(productCard);
+                        });
                         categoryDiv.appendChild(itemsGrid);
                         itemListContainer.appendChild(categoryDiv);
-                    }
+                    });
                 }
 
                 function renderCart() {
@@ -220,7 +321,7 @@
                     const button = e.target.closest('button');
                     if (!button) return;
 
-                    if (button.dataset.productId) {
+                    if (button.dataset.productId && !button.classList.contains('save-edit-product-btn') && !button.classList.contains('delete-product-btn')) {
                        const { productId, quantity, price } = button.dataset;
                        addToCart(parseInt(productId), quantity, parseFloat(price));
                     }
@@ -242,6 +343,9 @@
                         if (newCategoryName && newCategoryName !== oldCategoryName) {
                             products.forEach(p => { if (p.category === oldCategoryName) p.category = newCategoryName; });
                             saveProducts();
+                            const catIndex = categories.findIndex(c => c === oldCategoryName);
+                            if(catIndex !== -1) categories[catIndex] = newCategoryName;
+                            saveCategories();
                         }
                         renderProducts(products);
                     }
@@ -264,7 +368,7 @@
                                 <div class="space-y-3 p-4 border rounded-lg bg-gray-50">
                                     <h4 class="text-lg font-semibold">Add New Product to "${categoryName}"</h4>
                                     <input type="text" placeholder="Product Name (Marathi)" class="new-product-name w-full p-2 border rounded-md">
-                                    <input type="text" placeholder="Product Name (English)" class="new-product-nameEn w-full p-2 border rounded-md">
+                                    <input type="text" placeholder="Romanized Name (e.g., gahu)" class="new-product-nameEn w-full p-2 border rounded-md">
                                     <div class="price-entries space-y-2">
                                         <div class="flex gap-2 items-center">
                                             <input type="text" placeholder="Quantity (e.g., १ किलो)" class="new-product-quantity w-1/2 p-2 border rounded-md">
@@ -291,10 +395,8 @@
                         priceEntries.appendChild(newPriceEntry);
                     }
 
-                    if (button.classList.contains('cancel-new-product-btn')) {
-                        const formContainer = button.closest('.form-container');
-                        formContainer.classList.remove('active');
-                        formContainer.innerHTML = '';
+                    if (button.classList.contains('cancel-new-product-btn') || button.classList.contains('cancel-edit-product-btn')) {
+                        renderProducts(products);
                     }
 
                     if (button.classList.contains('save-new-product-btn')) {
@@ -309,21 +411,64 @@
                         priceEntries.forEach(entry => {
                             const quantity = entry.querySelector('.new-product-quantity').value.trim();
                             const price = parseFloat(entry.querySelector('.new-product-price').value);
-                            if (quantity && !isNaN(price) && price > 0) {
-                                prices[quantity] = price;
-                            } else {
-                                validPrices = false;
-                            }
+                            if (quantity && !isNaN(price) && price > 0) prices[quantity] = price;
+                            else validPrices = false;
                         });
 
                         if (name && validPrices && Object.keys(prices).length > 0) {
                             products.push({ id: Date.now(), name, nameEn, category: categoryName, prices });
                             saveProducts();
                             renderProducts(products);
-                        } else {
-                            alert('Please enter a valid product name and at least one valid quantity/price.');
+                        } else alert('Please enter a valid product name and at least one valid quantity/price.');
+                    }
+                    
+                    if (button.classList.contains('add-edit-price-point-btn')) {
+                        const priceEntries = button.previousElementSibling;
+                        const newPriceEntry = document.createElement('div');
+                        newPriceEntry.className = 'flex gap-2 items-center';
+                        newPriceEntry.innerHTML = `
+                            <input type="text" placeholder="Quantity" class="edit-product-quantity w-1/2 p-2 border rounded-md text-sm">
+                            <input type="number" placeholder="Price (₹)" class="edit-product-price w-1/2 p-2 border rounded-md text-sm">
+                            <button class="remove-price-point-btn text-red-500">✖</button>`;
+                        priceEntries.appendChild(newPriceEntry);
+                    }
+                    
+                    if (button.classList.contains('remove-price-point-btn')) {
+                        button.parentElement.remove();
+                    }
+
+                    if (button.classList.contains('save-edit-product-btn')) {
+                        const productId = parseInt(button.dataset.productId);
+                        const productIndex = products.findIndex(p => p.id === productId);
+                        const card = button.closest('.product-card');
+                        const newName = card.querySelector('.edit-product-name').value.trim();
+                        const newNameEn = card.querySelector('.edit-product-nameEn').value.trim();
+                        const newPrices = {};
+                        let valid = true;
+                        card.querySelectorAll('.edit-price-entries > div').forEach(entry => {
+                            const q = entry.querySelector('.edit-product-quantity').value.trim();
+                            const p = parseFloat(entry.querySelector('.edit-product-price').value);
+                            if (q && !isNaN(p) && p > 0) newPrices[q] = p; else valid = false;
+                        });
+
+                        if (newName && valid && Object.keys(newPrices).length > 0) {
+                            products[productIndex].name = newName;
+                            products[productIndex].nameEn = newNameEn;
+                            products[productIndex].prices = newPrices;
+                            saveProducts();
+                            renderProducts(products);
+                        } else alert('Invalid name or price details.');
+                    }
+                    
+                    if (button.classList.contains('delete-product-btn')) {
+                        if (confirm('Are you sure you want to delete this product?')) {
+                            const productId = parseInt(button.dataset.productId);
+                            products = products.filter(p => p.id !== productId);
+                            saveProducts();
+                            renderProducts(products);
                         }
                     }
+
                 });
 
                 cartItemsContainer.addEventListener('click', e => {
@@ -362,6 +507,35 @@
                         customItemNameInput.value = '';
                         customItemPriceInput.value = '';
                     } else { alert("अयोग्य नाव किंवा किंमत. कृपया पुन्हा प्रयत्न करा."); }
+                });
+
+                addNewCategoryBtn.addEventListener('click', () => {
+                    newCategoryForm.classList.remove('hidden');
+                    addNewCategoryBtn.classList.add('hidden');
+                });
+
+                cancelNewCategoryBtn.addEventListener('click', () => {
+                    newCategoryForm.classList.add('hidden');
+                    addNewCategoryBtn.classList.remove('hidden');
+                    newCategoryNameInput.value = '';
+                });
+
+                saveNewCategoryBtn.addEventListener('click', () => {
+                    const newCategoryName = newCategoryNameInput.value.trim();
+                    if (newCategoryName) {
+                        if (!categories.includes(newCategoryName)) {
+                            categories.push(newCategoryName);
+                            saveCategories();
+                            renderProducts(products);
+                            newCategoryForm.classList.add('hidden');
+                            addNewCategoryBtn.classList.remove('hidden');
+                            newCategoryNameInput.value = '';
+                        } else {
+                            alert('Category with this name already exists.');
+                        }
+                    } else {
+                        alert('Please enter a category name.');
+                    }
                 });
 
                 renderProducts(products);
