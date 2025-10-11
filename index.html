@@ -131,7 +131,7 @@
 
                 let products = JSON.parse(localStorage.getItem('renukaKiranaProducts')) || defaultProducts;
                 let categories = JSON.parse(localStorage.getItem('renukaKiranaCategories')) || [...new Set(products.map(p => p.category))];
-                let cart = [ { id: 15, name: 'मॅगी', quantity: '१ नग', price: 7, count: 2, isSample: true } ];
+                let cart = []; // Cart is now empty by default
 
                 const itemListContainer = document.getElementById('item-list-container');
                 const searchInput = document.getElementById('searchInput');
@@ -276,12 +276,7 @@
                         cartItemsContainer.innerHTML = '<p class="text-gray-500 text-center py-8">तुमची यादी रिकामी आहे.</p>';
                         updateTotal(); return;
                     }
-                    if (cart.every(item => item.isSample)) {
-                        const sampleMessage = document.createElement('p');
-                        sampleMessage.className = 'text-sm text-center text-gray-500 mb-2 p-2 bg-yellow-100 rounded-md';
-                        sampleMessage.textContent = 'उदाहरणासाठी एक वस्तू टाकली आहे. तुम्ही काढून टाकू शकता.';
-                        cartItemsContainer.appendChild(sampleMessage);
-                    }
+                    
                     cart.forEach((cartItem, index) => {
                         const itemDiv = document.createElement('div');
                         itemDiv.className = 'flex items-center justify-between py-3 border-b';
@@ -305,7 +300,6 @@
                 }
                 
                 function addToCart(productId, quantity, price) {
-                    if (cart.length > 0 && cart.every(item => item.isSample)) cart = [];
                     const existingItem = cart.find(item => item.id === productId && item.quantity === quantity);
                     if (existingItem) existingItem.count++;
                     else cart.push({ id: productId, name: products.find(p => p.id === productId).name, quantity, price, count: 1 });
@@ -499,7 +493,6 @@
                     const name = customItemNameInput.value.trim();
                     const price = parseFloat(customItemPriceInput.value);
                     if (name && !isNaN(price) && price > 0) {
-                        if (cart.length > 0 && cart.every(item => item.isSample)) cart = [];
                         cart.push({ id: 'custom-' + Date.now(), name, quantity: 'custom', price, count: 1 });
                         renderCart();
                         customItemForm.classList.add('hidden');
